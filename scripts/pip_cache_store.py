@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 """
-This script is intended to be used to store the ~/.pip-accel and
-~/.pip/download-cache directories in S3. The primary use case, as
-of writing this, is to help speed up Jenkins build times for
-edx-platform tests.
+This script is intended to be used to store the ~/.pip/download-cache
+directory in S3. The primary use case, as of writing this, is to help
+speed up Jenkins build times for edx-platform tests.
 
 Before running pip-accel install (or pip install) on a Jenkins worker,
-these directories will be download from S3.
+this directory will be download from S3.
 
-Usage:
-    `python scripts/pip-cache-store.py download`
-
-This script will also be used to automatically update these directories.
-
-Usage:
-    `python scripts/pip-cache-store.py upload`
+For usage:  `python pip_cache_store.py -h`.
 """
+import argparse
 from boto.s3.connection import S3Connection
 from boto.exception import S3ResponseError
 import os
@@ -28,40 +22,56 @@ class S3TarStore():
     """
     Static methods for storing directories in S3 in tar.gz form.
     """
+
+    def __init__(self, *args, **kwargs):
+        self.dirpath = kwargs['dirpath']
+        self.tarpath = kwargs['tarpath']
+        self.bucket_name = kwargs['bucket_name']
+        self.keyname = path(kwargs['bucket_folder']) / self.tarpath.basename()
+
     @staticmethod
     def bucket(bucket_name):
         """
         Returns bucket matching name. If there exists no such bucket
-        or there is a permissions error, then `None` is returned.
-        Any other exceptions, including connection errors, will be
-        raised to be handled elsewhere.
+        or there is an exception raised, then `None` is returned.
         """
         try:
             conn = S3Connection()
             bucket = conn.get_bucket(bucket_name)
-            return bucket
         except S3ResponseError:
             print ( 
                 "Please check that the bucket {} exists and that you have "
                 "the proper credentials to access it.".format(bucket_name)
             )
             return None
+        except Exception as e:
+            print (
+                "There was an error while connecting to S3. "
+                "Please check error log for more details."
+            )
+            sys.stderr.write(e.message)
+            return None
+
+        if not bucket:
+            print "No such bucket {}.".format(self.bucket_name)
+
+        return bucket
+
 
     @staticmethod
-    def download_dir(bucket, tarpath, dirpath):
+    def download_dir(bucket, tarpath, dirpath, keyname):
         """
-        Downloads a file matching `tarpath.basename()` item from `bucket`
+        Downloads a file matching `keyname` from `bucket`
         to `tarpath`. It then extracts the tar.gz file into `dirpath`.
-        If no matching tar.gz file is found, it does nothing.
+        If no matching `keyname` is found, it does nothing.
 
         Note that any exceptions that occur while downloading or unpacking
         will be logged, but not raised.
         """
-        tarname = tarpath.basename()
-        key = bucket.lookup(tarname)
+        key = bucket.lookup(keyname)
         if key:
             try:
-                print "Downloading contents of {} from S3.".format(tarname)
+                print "Downloading contents of {} from S3.".format(keyname)
                 key.get_contents_to_filename(tarpath)
 
                 with tarfile.open(tarpath, mode="r:gz") as tar:
@@ -73,30 +83,28 @@ class S3TarStore():
         else:
             print (
                 "Couldn't find anything matching {} in S3 bucket. "
-                "Doing Nothing.".format(tarname)
+                "Doing Nothing.".format(keyname)
             )
 
     @staticmethod
-    def upload_dir(bucket, tarpath, dirpath):
+    def upload_dir(bucket, tarpath, dirpath, keyname):
         """
-        Packs the contents for dirpath into a tar.gz file named
-        `tarpath.basename()`. It then uploads the tar.gz file to `bucket`.
-        If `dirpath` is not a directory, it does nothing.
+        Packs the contents of `dirpath` into a tar.gz file named
+        `tarpath.basename()`. It then uploads the tar.gz file to `bucket`
+        as `keyname`. If `dirpath` is not a directory, it does nothing.
 
         Note that any exceptions that occur while compressing or uploading
         will be logged, but not raised.
-        """
-        tarname = tarpath.basename()
-
+        # """
         if dirpath.isdir():
             try:
                 with tarfile.open(tarpath, "w:gz") as tar:
                     print "Packing up {} to {}".format(dirpath, tarpath)
-                    tar.add(dirpath, arcname=dirpath.basename())
+                    tar.add(dirpath, arcname='/')
 
-                print "Uploading {} to S3 bucket.".format(tarname)
-                existing_key = bucket.lookup(tarname)
-                key = existing_key if existing_key else bucket.new_key(tarname)
+                print "Uploading {} to S3 bucket.".format(keyname)
+                existing_key = bucket.lookup(keyname)
+                key = existing_key if existing_key else bucket.new_key(keyname)
                 key.set_contents_from_filename(tarpath)
             except Exception as e:
                 print ("Ignored Exception:\n {}".format(e.message))
@@ -104,112 +112,60 @@ class S3TarStore():
         else:
             "Path {} isn't a directory. Doing Nothing.".format(dirname)
 
-
-class PipCacheStore(S3TarStore):
-    """
-    Functionality for using S3 to cache edx-platform python dependencies for
-    jenkins workers.
-
-    Optional environment variables:
-
-    * PIP_CACHE_ID: Will be appended to the name of the expected or created tar files.
-      This defaults to 'master'.
-    * PIP_DOWNLOAD_CACHE_BUCKET: The name of the bucket where tar files containing
-      `~/.pip/download-cache` directories are stored. Default is 'pip-download-caches'.
-    * PIP_ACCEL_DATA_DIR_BUCKET: The name of the bucket where tar files containing
-      `~/.pip-accel` directories are stored. Default is 'pip-accel-data-dirs'.
-    """
-    home_dir = path(os.path.expanduser('~'))
-    pip_cache_id = os.environ.get('PIP_CACHE_ID', 'master')
-
-    stored_dirs = [
-        {
-            'path': home_dir / '.pip-accel',
-            'tarpath': home_dir / 'pip-accel-data-dir-{}.tar.gz'.format(pip_cache_id),
-            'bucket': os.environ.get('PIP_ACCEL_DATA_DIR_BUCKET', 'pip-accel-data-dirs'),
-        },
-        {
-            'path': home_dir / '.pip/download-cache',
-            'tarpath': home_dir / 'pip-download-cache-{}.tar.gz'.format(pip_cache_id),
-            'bucket': os.environ.get('PIP_DOWNLOAD_CACHE_BUCKET', 'pip-download-caches'),
-        },
-    ]
-
-    @classmethod
-    def download(cls):
+    def download(self):
         """
-        Downloads each of the expected stored directories.
+        Checks that bucket is available and downloads self.keyname to self.tarpath. 
+        Then extracts self.tarpath to self.dirpath.
         """
-        cls.do_action_for_each(cls.download_dir)
+        bucket = self.bucket(self.bucket_name)
+        if not bucket:
+            return
+        
+        self.download_dir(bucket, self.tarpath, self.dirpath, self.keyname)
 
-    @classmethod
-    def upload(cls):
+    def upload(self):
         """
-        Uploads each of the expected stored directories.
+        Checks that bucket is available. Then compresses self.dirpath to self.tarpath
+        and uploads self.tarpath to self.keyname.
         """
-        cls.do_action_for_each(cls.upload_dir)
-
-    @classmethod
-    def do_action_for_each(cls, action):
-        """
-        Iterates over `stored_dirs` and performs given action
-        on each. Action is either S3TarStore.upload_item or
-        S3TarStore.download_item.
-        """
-        for d in cls.stored_dirs:
-            try:
-                bucket = cls.bucket(d['bucket'])
-            except Exception as e:
-                print (
-                    "There was an error while connecting to S3. "
-                    "Please check error log for more details."
-                )
-                sys.stderr.write(e.message)
-                return 
-
-            if not bucket:
-                print "No such bucket {}. Moving on.".format(bucket)
-                continue
-
-            dirpath = d['path']
-            tarpath = d['tarpath']
-
-            action(bucket, tarpath, dirpath)
+        bucket = self.bucket(self.bucket_name)
+        if not bucket:
+            return
+        
+        self.upload_dir(bucket, self.tarpath, self.dirpath, self.keyname)
 
 
-def main(action):
+def main():
     """
-    Calls PipCacheStore.upload, PipCacheStore.download or returns
-    help text.
+    Calls S3TarStore.upload or S3TarStore.download using the command line args.
     """
-    if action in ('u', 'upload', '-u', '--upload'):
-        PipCacheStore.upload()
-    elif action in ('d', 'download', '-d', '--download'):
-        PipCacheStore.download()
-    elif action in ('h', 'help', '-h', '--help'):
-        print help_text()
-    else:
-        raise Exception('Invalid option: {}\n'.format(action) + help_text())
+    parser = argparse.ArgumentParser(description='Upload/download tar.gz files to/from S3.')
+    parser.add_argument('action', choices=('upload', 'download'))
+    parser.add_argument('--bucket', '-b', dest='bucket_name', required=True,
+                        help='Name of S3 bucket.')
+    parser.add_argument('--folder', '-f', dest='bucket_folder', required=True,
+                        help='Folder within S3 bucket. (ex. "v1/my-branch-name/")')
+    parser.add_argument('--dir', '-d', dest='dirpath', required=True,
+                        help='Directory to be uploaded from or downloaded to. '
+                        '(ex. "~/.pip/download-cache/")')
+    parser.add_argument('--tar', '-t', dest='tarpath', required=True,
+                        help='Path to place newly created or downloaded tarfile. '
+                        'The basename of this should be the basename of the tarfile '
+                        'stored in S3. (ex. "~/pip-download-cache.tar.gz")')
+    args = parser.parse_args()
 
-
-def help_text():
-    """
-    Returns help text for main script.
-    """
-    return (
-        'The following actions are available:'
-        '\n\tdownload, d: Downloads the master pip-cache and pip-accel-cache from S3'
-        '\n\tupload, u: Uploads the current pip-cache and pip-accel-cache to S3'
-        '\n\thelp, h: print this help text'
-        '\n\nNote that you must have AWS access and the proper permissions to use this,'
-        'and that you may have the permissions to complete all, part, or none of these actions.'
+    store = S3TarStore(
+        dirpath = path(args.dirpath),
+        tarpath = path(args.tarpath),
+        bucket_name = args.bucket_name,
+        bucket_folder = args.bucket_folder,
     )
+    
+    if args.action == 'upload':
+        store.upload()
+    elif args.action == 'download':
+        store.download()
 
 
 if __name__ == '__main__':
-    try:
-        action = sys.argv[1].strip()
-    except IndexError:
-        raise Exception('No option specified.\n' + help_text())
-    
-    main(action)
+    main()
