@@ -28,8 +28,8 @@ def edxnotes(cls):
 
         # Must be disabled:
         # - in Studio;
-        # - Harvard Annotation Tool is enabled for the course;
-        # - the feature flag/advanced settings of the course is set to False.
+        # - when Harvard Annotation Tool is enabled for the course;
+        # - when the feature flag or `edxnotes` setting of the course is set to False.
         if is_studio or not is_feature_enabled(course):
             return original_get_html(self, *args, **kwargs)
         else:

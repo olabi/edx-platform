@@ -173,15 +173,14 @@ class InheritanceMixin(XBlockMixin):
         default=default_reset_button
     )
     edxnotes = Boolean(
-        display_name=_("Enable Notes"),
-        help=_("Enter true or false. If true, you can use the Notes for HTML components. "
-               "Note: Harvard Annotation Tool must be disabled before start using this functionality."),
+        display_name=_("Enable Student Notes"),
+        help=_("Enter true or false. If true, students can use the Student Notes feature."),
         default=False,
         scope=Scope.settings
     )
     edxnotes_visibility = Boolean(
-        display_name=_("Enable visibility of Notes"),
-        help=_("Enter true or false. If true, Notes for HTML components will be visible."),
+        display_name=_("Enable visibility of Student Notes"),
+        help=_("Enter true or false. If true, Student Notes for HTML components will be visible."),
         default=True,
         scope=Scope.user_info
     )
