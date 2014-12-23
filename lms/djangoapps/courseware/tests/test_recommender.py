@@ -67,7 +67,7 @@ class TestRecommender(ModuleStoreTestCase, LoginEnrollmentTestCase):
             }
         )
 
-        self.resource_url = [
+        self.resource_urls = [
             (
                 "https://courses.edx.org/courses/MITx/3.091X/"
                 "2013_Fall/courseware/SP13_Week_4/"
@@ -80,9 +80,9 @@ class TestRecommender(ModuleStoreTestCase, LoginEnrollmentTestCase):
         ]
 
         self.test_recommendations = {
-            self.resource_url[0]: {
+            self.resource_urls[0]: {
                 "title": "Covalent bonding and periodic trends",
-                "url": self.resource_url[0],
+                "url": self.resource_urls[0],
                 "description": (
                     "http://people.csail.mit.edu/swli/edx/"
                     "recommendation/img/videopage1.png"
@@ -92,9 +92,9 @@ class TestRecommender(ModuleStoreTestCase, LoginEnrollmentTestCase):
                     "and periodic trends"
                 )
             },
-            self.resource_url[1]: {
+            self.resource_urls[1]: {
                 "title": "Polar covalent bonds and electronegativity",
-                "url": self.resource_url[1],
+                "url": self.resource_urls[1],
                 "description": (
                     "http://people.csail.mit.edu/swli/edx/"
                     "recommendation/img/videopage2.png"
@@ -214,7 +214,7 @@ class TestRecommenderCreateFromEmpty(TestRecommender):
             'endorsed_recommendation_reasons': [],
             'endorsed_recommendation_ids': [],
             'deendorsed_recommendations': {},
-            'recommendations': self.test_recommendations[self.resource_url[0]]
+            'recommendations': self.test_recommendations[self.resource_urls[0]]
         }
         # Importing resources
         f_handler = StringIO.StringIO(json.dumps(initial_configuration, sort_keys=True))
@@ -235,7 +235,7 @@ class TestRecommenderCreateFromEmpty(TestRecommender):
             'endorsed_recommendation_reasons': [],
             'endorsed_recommendation_ids': [],
             'deendorsed_recommendations': {},
-            'recommendations': self.test_recommendations[self.resource_url[0]]
+            'recommendations': self.test_recommendations[self.resource_urls[0]]
         }
         # Importing resources
         f_handler = StringIO.StringIO(json.dumps(initial_configuration, sort_keys=True))
@@ -253,8 +253,8 @@ class TestRecommenderWithResources(TestRecommender):
     def setUp(self):
         # call the setUp function from the superclass
         super(TestRecommenderWithResources, self).setUp()
-        self.resource_id = self.resource_url[0]
-        self.resource_id_second = self.resource_url[1]
+        self.resource_id = self.resource_urls[0]
+        self.resource_id_second = self.resource_urls[1]
         self.non_existing_resource_id = 'An non-existing id'
         self.set_up_resources()
 
