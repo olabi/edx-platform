@@ -48,10 +48,10 @@ define([
         },
 
         annotationViewerShown: function (viewer, annotations) {
-            var data = _.map(annotations, function (note) {
+            var data = _.map(annotations, function (annotation) {
                 return {
-                    'user': note.user,
-                    'note_id': note.id
+                    'user': annotation.user,
+                    'note_id': annotation.id
                 };
             });
             this.log('edx.course.student_notes.viewed', data);

@@ -45,7 +45,7 @@ define([
 
         unitLinkHandler: function (event) {
             event.preventDefault();
-            this.logger.emit('edx.student_notes.went_to_unit', {
+            this.logger.emit('edx.student_notes.used_unit_link', {
                 'note_id': this.model.get('id'),
                 'user': this.model.get('user'),
                 'usage_id': this.model.get('usage_id')

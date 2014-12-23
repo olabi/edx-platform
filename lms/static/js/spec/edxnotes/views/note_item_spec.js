@@ -55,11 +55,11 @@ define([
             expect(view.$('.reference-meta').last()).toContainText('December 11, 2014 at 11:12AM');
         });
 
-        it('should log the edx.student_notes.went_to_unit event properly', function () {
+        it('should log the edx.student_notes.used_unit_link event properly', function () {
             var view = getView();
             spyOn(view, 'redirectTo');
             view.$('.reference-unit-link').click();
-            expect(Logger.log).toHaveBeenCalledWith('edx.student_notes.went_to_unit', {
+            expect(Logger.log).toHaveBeenCalledWith('edx.student_notes.used_unit_link', {
                 'user': 'user-123',
                 'note_id': 'id-123',
                 'usage_id': 'usage_id-123',
