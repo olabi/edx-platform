@@ -730,6 +730,7 @@ class CourseRegistrationCode(models.Model):
     created_at = models.DateTimeField(default=datetime.now(pytz.utc))
     order = models.ForeignKey(Order, db_index=True, null=True, related_name="purchase_order")
     invoice = models.ForeignKey(Invoice, null=True)
+    mode_slug = models.CharField(max_length=100, null=True)
 
     @classmethod
     @transaction.commit_on_success

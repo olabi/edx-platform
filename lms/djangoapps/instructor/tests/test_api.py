@@ -1719,7 +1719,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(2):
             course_registration_code = CourseRegistrationCode(
                 code='sale_invoice{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1801,7 +1801,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(2):
             course_registration_code = CourseRegistrationCode(
                 code='sale_invoice{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1816,7 +1816,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='sale_invoice{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1835,7 +1835,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='qwerty{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1859,7 +1859,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='qwerty{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=self.sale_invoice_1
+                created_by=self.instructor, invoice=self.sale_invoice_1, mode_slug='honor'
             )
             course_registration_code.save()
 
@@ -1873,7 +1873,7 @@ class TestInstructorAPILevelsDataDump(ModuleStoreTestCase, LoginEnrollmentTestCa
         for i in range(5):
             course_registration_code = CourseRegistrationCode(
                 code='xyzmn{}'.format(i), course_id=self.course.id.to_deprecated_string(),
-                created_by=self.instructor, invoice=sale_invoice_2
+                created_by=self.instructor, invoice=sale_invoice_2, mode_slug='honor'
             )
             course_registration_code.save()
 
