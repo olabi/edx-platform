@@ -336,6 +336,7 @@ def is_feature_enabled(course):
 
     return (feature_enabled and tab_found) and not is_harvard_notes_enabled(course)
 
+
 def is_harvard_notes_enabled(course):
     """
     Returns True if Harvard Annotation Tool is enabled for the course,
