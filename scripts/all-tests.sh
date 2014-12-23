@@ -97,6 +97,9 @@ fi
 # Activate the Python virtualenv
 source $HOME/edx-venv/bin/activate
 
+# Download the pip-download-cache
+python scripts/pip_cache_store.py download -b edx-platform.dependency-cache -f v1/master -d $HOME/.pip/download-cache/ -t $HOME/pip-download-cache.tar.gz
+
 # If the environment variable 'SHARD' is not set, default to 'all'.
 # This could happen if you are trying to use this script from
 # jenkins and do not define 'SHARD' in your multi-config project.
@@ -122,7 +125,12 @@ case "$TEST_SUITE" in
 <testcase classname="quality" name="quality" time="0.604"></testcase>
 </testsuite>
 END
-        exit $EXIT
+        exitcode=$EXIT
+
+        # TODO: Update this ONLY if we are on master builds
+        # Update the pip-download-cache.tar.gz in S3
+        python scripts/pip_cache_store.py upload -b edx-platform.dependency-cache -f v1/master -d $HOME/.pip/download-cache/ -t $HOME/pip-download-cache.tar.gz
+        exit $exitcode
         ;;
 
     "unit")
